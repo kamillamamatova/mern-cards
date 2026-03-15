@@ -1,14 +1,22 @@
 function LoggedInName()
 {
+  const storedUser = localStorage.getItem('user_data');
+  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+  const name = parsedUser
+    ? `${parsedUser.firstName} ${parsedUser.lastName}`
+    : 'Unknown User';
+
   function doLogout(event: any): void
   {
     event.preventDefault();
-    alert('doLogout');
+    localStorage.removeItem('user_data');
+    window.location.href = '/';
   }
 
   return (
     <div id="loggedInDiv">
-      <span id="userName">Logged In As John Doe </span><br />
+      <span id="userName">Logged In As {name}</span><br />
       <button
         type="button"
         id="logoutButton"
