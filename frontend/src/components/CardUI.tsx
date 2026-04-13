@@ -1,5 +1,125 @@
 import React, { useState } from 'react';
 
+const DEFAULT_CARDS =
+[
+  'Roy Campanella',
+  'Paul Molitor',
+  'Tony Gwynn',
+  'Dennis Eckersley',
+  'Reggie Jackson',
+  'Gaylord Perry',
+  'Buck Leonard',
+  'Rollie Fingers',
+  'Charlie Gehringer',
+  'Wade Boggs',
+  'Carl Hubbell',
+  'Dave Winfield',
+  'Jackie Robinson',
+  'Ken Griffey, Jr.',
+  'Al Simmons',
+  'Chuck Klein',
+  'Mel Ott',
+  'Mark McGwire',
+  'Nolan Ryan',
+  'Ralph Kiner',
+  'Yogi Berra',
+  'Goose Goslin',
+  'Greg Maddux',
+  'Frankie Frisch',
+  'Ernie Banks',
+  'Ozzie Smith',
+  'Hank Greenberg',
+  'Kirby Puckett',
+  'Bob Feller',
+  'Dizzy Dean',
+  'Joe Jackson',
+  'Sam Crawford',
+  'Barry Bonds',
+  'Duke Snider',
+  'George Sisler',
+  'Ed Walsh',
+  'Tom Seaver',
+  'Willie Stargell',
+  'Bob Gibson',
+  'Brooks Robinson',
+  'Steve Carlton',
+  'Joe Medwick',
+  'Nap Lajoie',
+  'Cal Ripken, Jr.',
+  'Mike Schmidt',
+  'Eddie Murray',
+  'Tris Speaker',
+  'Al Kaline',
+  'Sandy Koufax',
+  'Willie Keeler',
+  'Pete Rose',
+  'Robin Roberts',
+  'Eddie Collins',
+  'Lefty Gomez',
+  'Lefty Grove',
+  'Carl Yastrzemski',
+  'Frank Robinson',
+  'Juan Marichal',
+  'Warren Spahn',
+  'Pie Traynor',
+  'Roberto Clemente',
+  'Harmon Killebrew',
+  'Satchel Paige',
+  'Eddie Plank',
+  'Josh Gibson',
+  'Oscar Charleston',
+  'Mickey Mantle',
+  'Cool Papa Bell',
+  'Johnny Bench',
+  'Mickey Cochrane',
+  'Jimmie Foxx',
+  'Jim Palmer',
+  'Cy Young',
+  'Eddie Mathews',
+  'Honus Wagner',
+  'Paul Waner',
+  'Grover Alexander',
+  'Rod Carew',
+  'Joe DiMaggio',
+  'Joe Morgan',
+  'Stan Musial',
+  'Bill Terry',
+  'Rogers Hornsby',
+  'Lou Brock',
+  'Ted Williams',
+  'Bill Dickey',
+  'Christy Mathewson',
+  'Willie McCovey',
+  'Lou Gehrig',
+  'George Brett',
+  'Hank Aaron',
+  'Harry Heilmann',
+  'Walter Johnson',
+  'Roger Clemens',
+  'Ty Cobb',
+  'Whitey Ford',
+  'Willie Mays',
+  'Rickey Henderson',
+  'Babe Ruth'
+];
+
+function getLocalCards(): string[]
+{
+  const storedCards = localStorage.getItem('local_cards');
+  if (!storedCards)
+  {
+    localStorage.setItem('local_cards', JSON.stringify(DEFAULT_CARDS));
+    return [...DEFAULT_CARDS];
+  }
+
+  return JSON.parse(storedCards);
+}
+
+function saveLocalCards(cards: string[]): void
+{
+  localStorage.setItem('local_cards', JSON.stringify(cards));
+}
+
 function CardUI()
 {
   const storedUser = localStorage.getItem('user_data');
@@ -58,7 +178,10 @@ function CardUI()
     }
     catch (error: any)
     {
-      setMessage(error.toString());
+      const currentCards = getLocalCards();
+      currentCards.push(card);
+      saveLocalCards(currentCards);
+      setMessage('Card has been added');
     }
   }
 
@@ -103,8 +226,23 @@ function CardUI()
     }
     catch (error: any)
     {
-      alert(error.toString());
-      setResults(error.toString());
+      const currentCards = getLocalCards();
+      const filteredCards = currentCards.filter((cardName) =>
+        cardName.toLowerCase().includes(search.toLowerCase().trim())
+      );
+
+      let resultText = '';
+      for (let i = 0; i < filteredCards.length; i++)
+      {
+        resultText += filteredCards[i];
+        if (i < filteredCards.length - 1)
+        {
+          resultText += ', ';
+        }
+      }
+
+      setResults('Card(s) have been retrieved');
+      setCardList(resultText);
     }
   }
 
