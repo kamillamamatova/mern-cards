@@ -1,133 +1,183 @@
-require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
-const { MongoClient } = require('mongodb');
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-const url = process.env.MONGODB_URI;
-const client = new MongoClient(url);
-
-let db;
-
-async function startServer()
+app.use((req, res, next) =>
 {
-  try
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PATCH, DELETE, OPTIONS'
+  );
+  next();
+});
+
+let cardList =
+[
+  'Roy Campanella',
+  'Paul Molitor',
+  'Tony Gwynn',
+  'Dennis Eckersley',
+  'Reggie Jackson',
+  'Gaylord Perry',
+  'Buck Leonard',
+  'Rollie Fingers',
+  'Charlie Gehringer',
+  'Wade Boggs',
+  'Carl Hubbell',
+  'Dave Winfield',
+  'Jackie Robinson',
+  'Ken Griffey, Jr.',
+  'Al Simmons',
+  'Chuck Klein',
+  'Mel Ott',
+  'Mark McGwire',
+  'Nolan Ryan',
+  'Ralph Kiner',
+  'Yogi Berra',
+  'Goose Goslin',
+  'Greg Maddux',
+  'Frankie Frisch',
+  'Ernie Banks',
+  'Ozzie Smith',
+  'Hank Greenberg',
+  'Kirby Puckett',
+  'Bob Feller',
+  'Dizzy Dean',
+  'Joe Jackson',
+  'Sam Crawford',
+  'Barry Bonds',
+  'Duke Snider',
+  'George Sisler',
+  'Ed Walsh',
+  'Tom Seaver',
+  'Willie Stargell',
+  'Bob Gibson',
+  'Brooks Robinson',
+  'Steve Carlton',
+  'Joe Medwick',
+  'Nap Lajoie',
+  'Cal Ripken, Jr.',
+  'Mike Schmidt',
+  'Eddie Murray',
+  'Tris Speaker',
+  'Al Kaline',
+  'Sandy Koufax',
+  'Willie Keeler',
+  'Pete Rose',
+  'Robin Roberts',
+  'Eddie Collins',
+  'Lefty Gomez',
+  'Lefty Grove',
+  'Carl Yastrzemski',
+  'Frank Robinson',
+  'Juan Marichal',
+  'Warren Spahn',
+  'Pie Traynor',
+  'Roberto Clemente',
+  'Harmon Killebrew',
+  'Satchel Paige',
+  'Eddie Plank',
+  'Josh Gibson',
+  'Oscar Charleston',
+  'Mickey Mantle',
+  'Cool Papa Bell',
+  'Johnny Bench',
+  'Mickey Cochrane',
+  'Jimmie Foxx',
+  'Jim Palmer',
+  'Cy Young',
+  'Eddie Mathews',
+  'Honus Wagner',
+  'Paul Waner',
+  'Grover Alexander',
+  'Rod Carew',
+  'Joe DiMaggio',
+  'Joe Morgan',
+  'Stan Musial',
+  'Bill Terry',
+  'Rogers Hornsby',
+  'Lou Brock',
+  'Ted Williams',
+  'Bill Dickey',
+  'Christy Mathewson',
+  'Willie McCovey',
+  'Lou Gehrig',
+  'George Brett',
+  'Hank Aaron',
+  'Harry Heilmann',
+  'Walter Johnson',
+  'Roger Clemens',
+  'Ty Cobb',
+  'Whitey Ford',
+  'Willie Mays',
+  'Rickey Henderson',
+  'Babe Ruth'
+];
+
+app.post('/api/addcard', async (req, res) =>
+{
+  const { card } = req.body;
+  const error = '';
+
+  cardList.push(card);
+
+  const ret = { error: error };
+  res.status(200).json(ret);
+});
+
+app.post('/api/login', async (req, res) =>
+{
+  let error = '';
+
+  const { login, password } = req.body;
+
+  let id = -1;
+  let fn = '';
+  let ln = '';
+
+  if (login.toLowerCase() == 'rickl' && password == 'COP4331')
   {
-    await client.connect();
-    db = client.db(process.env.DB_NAME || 'COP4331Cards');
-
-    app.post('/api/login', async (req, res) =>
-    {
-      let error = '';
-
-      try
-      {
-        const { login, password } = req.body;
-
-        const results = await db.collection('Users')
-          .find({ Login: login, Password: password })
-          .toArray();
-
-        let id = -1;
-        let fn = '';
-        let ln = '';
-
-        if (results.length > 0)
-        {
-          id = results[0].UserID;
-          fn = results[0].FirstName;
-          ln = results[0].LastName;
-        }
-        else
-        {
-          error = 'Invalid user name/password';
-        }
-
-        const ret = { id: id, firstName: fn, lastName: ln, error: error };
-        res.status(200).json(ret);
-      }
-      catch (e)
-      {
-        res.status(500).json({
-          id: -1,
-          firstName: '',
-          lastName: '',
-          error: e.toString()
-        });
-      }
-    });
-
-    app.post('/api/addcard', async (req, res) =>
-    {
-      const { userId, card } = req.body;
-      let error = '';
-
-      try
-      {
-        const newCard = {
-          Card: card,
-          UserId: Number(userId)
-        };
-
-        await db.collection('Cards').insertOne(newCard);
-      }
-      catch (e)
-      {
-        error = e.toString();
-      }
-
-      const ret = { error: error };
-      res.status(200).json(ret);
-    });
-
-    app.post('/api/searchcards', async (req, res) =>
-    {
-      let error = '';
-
-      try
-      {
-        const { userId, search } = req.body;
-        const _search = search.trim();
-
-        const results = await db.collection('Cards')
-          .find({
-            UserId: Number(userId),
-            Card: { $regex: _search + '.*', $options: 'i' }
-          })
-          .toArray();
-
-        const _ret = [];
-        for (let i = 0; i < results.length; i++)
-        {
-          _ret.push(results[i].Card);
-        }
-
-        const ret = { results: _ret, error: error };
-        res.status(200).json(ret);
-      }
-      catch (e)
-      {
-        res.status(500).json({
-          results: [],
-          error: e.toString()
-        });
-      }
-    });
-
-    app.listen(5001, () =>
-    {
-      console.log('Server started on port 5001');
-    });
+    id = 1;
+    fn = 'Rick';
+    ln = 'Leinecker';
   }
-  catch (err)
+  else
   {
-    console.error('Failed to connect to MongoDB:', err);
+    error = 'Invalid user name/password';
   }
-}
 
-startServer();
+  const ret = { id: id, firstName: fn, lastName: ln, error: error };
+  res.status(200).json(ret);
+});
+
+app.post('/api/searchcards', async (req, res) =>
+{
+  const { search } = req.body;
+  const _search = search.toLowerCase().trim();
+  const _ret = [];
+
+  for (let i = 0; i < cardList.length; i++)
+  {
+    const lowerFromList = cardList[i].toLowerCase();
+    if (lowerFromList.indexOf(_search) >= 0)
+    {
+      _ret.push(cardList[i]);
+    }
+  }
+
+  const ret = { results: _ret, error: '' };
+  res.status(200).json(ret);
+});
+
+app.listen(5000, () =>
+{
+  console.log('Server started on port 5000');
+});
